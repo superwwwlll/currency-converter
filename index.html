@@ -196,14 +196,10 @@
       }
       setStatus("正在更新汇率…", false);
       try {
-        const url = `https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(from.value)}&symbols=${encodeURIComponent(to.value)}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("请求失败");
-        const data = await response.json();
-        if (!data.rates || !data.rates[to.value]) throw new Error("暂无该币种数据");
-        currentRate = data.rates[to.value];
-        localStorage.setItem(key, JSON.stringify({ rate: currentRate, date: data.date, savedAt: Date.now() }));
-        setStatus(`数据日期 ${data.date}`, true);
+        const result = await fetchRateWithFallback(from.value, to.value);
+        currentRate = result.rate;
+        localStorage.setItem(key, JSON.stringify({ rate: currentRate, date: result.date, savedAt: Date.now() }));
+        setStatus(`数据日期 ${result.date}`, true);
       } catch (error) {
         if (cached) {
           currentRate = cached.rate;
@@ -214,6 +210,45 @@
         }
       }
       render();
+    }
+
+    async function fetchJson(url, timeout = 7000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeout);
+      try {
+        const response = await fetch(url, { signal: controller.signal, cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    async function fetchRateWithFallback(base, quote) {
+      const providers = [
+        async () => {
+          const data = await fetchJson(`https://api.frankfurter.dev/v1/latest?base=${encodeURIComponent(base)}&symbols=${encodeURIComponent(quote)}`);
+          if (!data.rates?.[quote]) throw new Error("主接口无该币种");
+          return { rate: data.rates[quote], date: data.date };
+        },
+        async () => {
+          const data = await fetchJson(`https://open.er-api.com/v6/latest/${encodeURIComponent(base)}`);
+          if (data.result !== "success" || !data.rates?.[quote]) throw new Error("备用接口无该币种");
+          return { rate: data.rates[quote], date: new Date(data.time_last_update_unix * 1000).toISOString().slice(0, 10) };
+        },
+        async () => {
+          const lowerBase = base.toLowerCase();
+          const lowerQuote = quote.toLowerCase();
+          const data = await fetchJson(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${lowerBase}.json`);
+          if (!data[lowerBase]?.[lowerQuote]) throw new Error("镜像接口无该币种");
+          return { rate: data[lowerBase][lowerQuote], date: data.date };
+        }
+      ];
+      let lastError;
+      for (const provider of providers) {
+        try { return await provider(); } catch (error) { lastError = error; }
+      }
+      throw lastError || new Error("全部汇率源不可用");
     }
 
     function setStatus(text, ok) {
