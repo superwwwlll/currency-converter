@@ -51,26 +51,52 @@
       -webkit-backdrop-filter: blur(18px);
     }
     label { display: block; margin-bottom: 9px; color: var(--muted); font-size: 13px; font-weight: 700; }
-    .amount-wrap { position: relative; }
+    .amount-wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 82px;
+      border-bottom: 1px solid var(--line);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .amount-wrap:focus-within {
+      border-color: var(--green);
+      box-shadow: 0 4px 0 -3px rgba(20,107,74,.25);
+    }
     #amount {
       width: 100%;
-      padding: 4px 84px 18px 0;
+      min-width: 0;
+      padding: 10px 0 14px;
       border: 0;
-      border-bottom: 1px solid var(--line);
       outline: 0;
       background: transparent;
       color: var(--ink);
       font: 700 clamp(38px, 10vw, 62px)/1.1 inherit;
       letter-spacing: -.045em;
     }
-    #amount:focus { border-color: var(--green); }
-    .amount-code { position: absolute; right: 0; top: 18px; color: var(--green); font-weight: 800; }
-    .currency-row { display: grid; grid-template-columns: 1fr 48px 1fr; gap: 12px; align-items: end; margin-top: 26px; }
+    #amount::-webkit-inner-spin-button,
+    #amount::-webkit-outer-spin-button { appearance: none; margin: 0; }
+    .amount-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      padding: 8px 11px;
+      border-radius: 10px;
+      color: var(--green);
+      background: rgba(20,107,74,.08);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: .04em;
+    }
+    .currency-row { display: grid; grid-template-columns: 1fr 48px 1fr; gap: 12px; align-items: end; margin-top: 28px; }
     select {
       width: 100%;
       appearance: none;
       border: 1px solid var(--line);
       border-radius: 15px;
+      min-height: 50px;
       padding: 14px 38px 14px 14px;
       outline: none;
       color: var(--ink);
@@ -79,13 +105,13 @@
     }
     select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(20,107,74,.1); }
     #swap {
-      width: 48px; height: 48px; padding: 0;
+      width: 48px; height: 48px; padding: 0; margin-bottom: 1px;
       border: 1px solid var(--line); border-radius: 50%;
       background: #fff; color: var(--green); cursor: pointer;
       font-size: 20px; transition: transform .2s, background .2s;
     }
     #swap:hover { transform: rotate(180deg); background: #f1f7f4; }
-    .result { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--line); }
+    .result { margin-top: 28px; padding: 24px; border-radius: 20px; background: rgba(20,107,74,.055); }
     .result-label { color: var(--muted); font-size: 13px; }
     .result-value { margin-top: 6px; overflow-wrap: anywhere; font-size: clamp(34px, 8vw, 48px); font-weight: 800; letter-spacing: -.045em; }
     .result-value span { color: var(--green); font-size: .42em; letter-spacing: .02em; }
@@ -100,6 +126,9 @@
       .currency-row { grid-template-columns: 1fr 42px 1fr; gap: 8px; }
       #swap { width: 42px; height: 42px; }
       select { padding-left: 11px; font-size: 14px; }
+      .amount-wrap { min-height: 72px; }
+      .amount-code { min-width: 52px; padding-inline: 9px; }
+      .result { padding: 20px; }
     }
   </style>
 </head>
